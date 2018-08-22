@@ -13,6 +13,5 @@ start(_Type, Port) ->
     ger_service_sup:start_link(Port).
 
 stop(_State) ->
-
-	supervisor:restart_child(ger_service_sup, _State),
+	application:stop(ger_service_app),
     ok.

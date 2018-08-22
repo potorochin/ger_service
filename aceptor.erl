@@ -7,12 +7,13 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/1]).
+-export([open_socket/1, get_inf/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
 %% ------------------------------------------------------------------
 
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, open_socket/1, get_inf/1,
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
 %% ------------------------------------------------------------------
@@ -21,15 +22,6 @@
 
 start_link(Port) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [Port], []).
-
-%% ------------------------------------------------------------------
-%% gen_server Function Definitions
-%% ------------------------------------------------------------------
-
-init(Args) ->
-	%%io:format("~p Work Sup ~n", [whereis(ger_service_sup_worker)]),
-    {ok, Args}.
-
 
 
     open_socket(Pid) ->
@@ -52,6 +44,21 @@ init(Args) ->
             {ok, Bs}
     end.
 
+    add_logg(Buff) ->
+    	gen_server:cast(whereis(loger), Buff).
+
+%% ------------------------------------------------------------------
+%% gen_server Function Definitions
+%% ------------------------------------------------------------------
+
+init(Args) ->
+
+   	add_logg(<<"Start aceptor ">>),
+		add_logg(erlang:list_to_binary(erlang:pid_to_list(self()))),
+
+	%%io:format("~p Work Sup ~n", [whereis(ger_service_sup_worker)]),
+    {ok, Args}.
+
 
 
 handle_call(_Request, _From, State) ->
@@ -68,9 +75,9 @@ handle_cast(_Msg, State) ->
 
 	case _Msg of
 		socket -> 
-		io:format("~p~n", [State]),
 		[Port |  _] = lists:reverse(State),
-		io:format("Open From p ~p~n", [Port]),
+		add_logg(<<"Open From port: ">>),
+		add_logg(erlang:integer_to_binary(Port)),
 	
   	case gen_tcp:listen(Port, [{packet, raw}, {active, false},{reuseaddr, true}]) of
         {ok,LSock}  ->
@@ -79,7 +86,13 @@ handle_cast(_Msg, State) ->
 
 			ok = gen_tcp:close(Sock),
 		    ok = gen_tcp:close(LSock),
-		    io:format("~p~n", [Bin]),
+
+			add_logg(<<"Closed  port: ">>),
+			add_logg(erlang:integer_to_binary(Port)),
+			add_logg(<<"Get From Socket ">> ),
+			add_logg(erlang:list_to_binary(Bin)),
+			add_logg(<<"It`s all ">> ),
+
 		    {noreply, [Bin | State]};
 
         {error,eaddrinuse} -> io:format("error eaddrinuse in listen ~n"),
