@@ -7,7 +7,7 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/1]).
--export([open_socket/1, get_inf/1]).
+-export([open_socket/1, get_inf/1, addChild/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -37,8 +37,10 @@ start_link(Port) ->
 	        		"Stop\r\n" -> 
 	            {ok, Bs};
 	             _ ->
-	             io:format("~p~n",[B]),
-	        	do_recv(Sock, [lists:reverse(lists:nthtail(2, lists:reverse(B))) | Bs])
+	            
+	            Rez = lists:reverse(lists:nthtail(2, lists:reverse(B))),
+	            
+	        	do_recv(Sock, [Rez | Bs])
         	end;
         {error, closed} ->
             {ok, Bs}
@@ -46,6 +48,39 @@ start_link(Port) ->
 
     add_logg(Buff) ->
     	gen_server:cast(whereis(loger), Buff).
+
+
+addChild(Pid) ->
+	gen_server:call(Pid, addwork).
+
+findWorker([], _) -> [];
+
+findWorker([Head | Tail], Counter) -> 
+
+	W = <<"workerInf">>,
+	Count = erlang:integer_to_binary(Counter),
+
+	Name = erlang:binary_to_atom(<<W/binary, Count/binary>>, latin1),
+
+
+    ChildSpec =         % The list of child processes you should supervise
+        {   
+            Name,     % - Register it under the name hello_server
+            {                 % - Here's how to find and start this child's code 
+                workerInf,   %   * the module is called hello_server
+                start_link,     %   * the function to invoke is called start_link
+                [Head]              %   * and here's the list of default parameters to use
+            },                
+                permanent,        % - child should run permantenly, restart on crash 
+                2000,             % - give child 2 sec to clean up on system stop, then kill 
+                worker,           % - FYI, this child is a worker, not a supervisor
+                [workerInf]    % - these are the modules the process uses  
+            }
+        ,
+    supervisor:start_child(ger_service_sup_worker,ChildSpec),
+    findWorker(Tail, Counter + 1).
+
+
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
@@ -56,7 +91,6 @@ init(Args) ->
    	add_logg(<<"Start aceptor ">>),
 		add_logg(erlang:list_to_binary(erlang:pid_to_list(self()))),
 
-	%%io:format("~p Work Sup ~n", [whereis(ger_service_sup_worker)]),
     {ok, Args}.
 
 
@@ -64,6 +98,10 @@ init(Args) ->
 handle_call(_Request, _From, State) ->
 	
 	case _Request of 
+		addwork -> 
+		[_ |  BuffWorker] = lists:reverse(State),
+		[Worker] = BuffWorker,
+		findWorker(Worker,0);
 		show -> io:format("~p~n", [State]);
 		_ -> io:format("Unknown Command\n")
     end,
@@ -87,11 +125,10 @@ handle_cast(_Msg, State) ->
 			ok = gen_tcp:close(Sock),
 		    ok = gen_tcp:close(LSock),
 
+			add_logg(erlang:list_to_binary(Bin)),
+
 			add_logg(<<"Closed  port: ">>),
 			add_logg(erlang:integer_to_binary(Port)),
-			add_logg(<<"Get From Socket ">> ),
-			add_logg(erlang:list_to_binary(Bin)),
-			add_logg(<<"It`s all ">> ),
 
 		    {noreply, [Bin | State]};
 

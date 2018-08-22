@@ -1,4 +1,4 @@
--module(loger).
+-module(workerInf).
 -behaviour(gen_server).
 -define(SERVER, ?MODULE).
 
@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -19,45 +19,28 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
+add_logg(Buff) ->
+    gen_server:cast(whereis(loger), Buff).
 
 
+start_link(Text) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Text], []).
 
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
-
-    add_long_string([], Acc) -> Acc;
-
-    add_long_string([Head | Tail], Acc) ->
-        add_long_string(Tail,<<Acc/binary, Head/binary>>).
-
-    get_time_to_string(Day, Time) ->
-
-    {Y, M, D} = Day,
-    {H, Min, Sec} =Time,
-
-    add_long_string([
-        erlang:integer_to_binary(Y), <<"_">>,
-        erlang:integer_to_binary(M), <<"_">>,
-        erlang:integer_to_binary(D), <<"_">>,
-        erlang:integer_to_binary(H), <<"_">>,
-        erlang:integer_to_binary(Min), <<"_">>,
-        erlang:integer_to_binary(Sec)],  <<"">>).
 
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init([]) ->
+init(Args) ->
     
-    gen_server:cast(self(), <<"Start ger_service_sup ">>),
-       gen_server:cast(self(), erlang:list_to_binary(erlang:pid_to_list(whereis(ger_service_sup)))),
+    add_logg(<<"Start Worker ">>),   
+    add_logg(atom_to_binary(?SERVER, latin1)), 
+        add_logg(erlang:list_to_binary(erlang:pid_to_list(self()))),
+        io:format("~p~n", [Args]),
 
-    FileName = add_long_string([ <<"Logs/">>, get_time_to_string(erlang:date(), erlang:time()), <<".txt">>], <<"">>),
-    {ok, S} = file:open(FileName, write),
 
-    {ok, S}.
+    {ok, Args}.
 
 
 handle_call(_Request, _From, State) ->
@@ -67,8 +50,6 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(_Msg, State) ->
 
-    io:format(State, "\~s\~n", [add_long_string([<<"\n">>,get_time_to_string(erlang:date(), erlang:time()), <<"\n">>, _Msg], <<"">>)]),
-    %file:write_file(State,  add_long_string([<<"\n">>,get_time_to_string(erlang:date(), erlang:time()), <<"\n">>, _Msg], <<"">>),  [binary] ),
 
     {noreply, State}.
 
@@ -77,6 +58,10 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
+    add_logg(<<"Closed Worker">>),
+    add_logg(atom_to_binary(?SERVER, latin1)), 
+
+        add_logg(erlang:list_to_binary(erlang:pid_to_list(self()))),
 
     ok.
 
