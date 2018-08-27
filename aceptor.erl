@@ -7,7 +7,7 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/1]).
--export([open_socket/1, get_inf/1, addChild/1]).
+-export([open_socket/1, get_inf/1, addChild/1, pars_exchange/1]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -52,6 +52,11 @@ start_link(Port) ->
 
 addChild(Pid) ->
 	gen_server:call(Pid, addwork).
+
+
+
+pars_exchange(Pid) ->
+	gen_server:cast(Pid, exchange).
 
 findWorker([], _) -> [];
 
@@ -112,6 +117,8 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
 
 	case _Msg of
+
+
 		socket -> 
 		[Port |  _] = lists:reverse(State),
 		add_logg(<<"Open From port: ">>),
@@ -135,7 +142,26 @@ handle_cast(_Msg, State) ->
         {error,eaddrinuse} -> io:format("error eaddrinuse in listen ~n"),
     	{noreply, State}
     end;
- 
+    	exchange ->
+
+    	%% 497c25ee-f785-4cd5-a5e4-ab9e470b2760
+    	%% /v1/cryptocurrency/info
+    	%% https://pro-api.coinmarketcap.com
+
+
+    	%% Get Request To Server
+    		inets:start(),
+    		ssl:start(),
+    		Rez = httpc:request(get, {"https://pro-api.coinmarketcap.com/v1/cryptocurrency/info", []}, 
+    	[{timeout, timer:seconds(5)}], []),
+
+
+    		io:format("~p~n", [Rez]),
+    		
+    		inets:stop(),
+    		ssl:stop(),
+    		{noreply, State};
+ 	
     	_ -> io:format("Unknown Command\n"),
     	{noreply, State}
     end.

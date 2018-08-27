@@ -24,7 +24,7 @@ add_logg(Buff) ->
 
 
 start_link(Text) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [Text], []).
+    gen_server:start_link(?MODULE, [Text], []).
 
 
 
