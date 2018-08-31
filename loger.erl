@@ -55,9 +55,10 @@ init([]) ->
        gen_server:cast(self(), erlang:list_to_binary(erlang:pid_to_list(whereis(ger_service_sup)))),
 
     FileName = add_long_string([ <<"Logs/">>, get_time_to_string(erlang:date(), erlang:time()), <<".txt">>], <<"">>),
-    {ok, S} = file:open(FileName, write),
+    %io:format("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!~p!!!!!!!!!!!!!!!!!!!!!!!!!!~n", [FileName]),
+    %{ok, S} = file:open(FileName, write),
 
-    {ok, S}.
+    {ok, []}.
 
 
 handle_call(_Request, _From, State) ->
@@ -67,13 +68,13 @@ handle_call(_Request, _From, State) ->
 
 handle_cast(_Msg, State) ->
 
-    io:format(State, "\~s\~n", [add_long_string([<<"\n">>,get_time_to_string(erlang:date(), erlang:time()), <<"\n">>, _Msg], <<"">>)]),
+    %io:format(State, "\~s\~n", [add_long_string([<<"\n">>,get_time_to_string(erlang:date(), erlang:time()), <<"\n">>, _Msg], <<"">>)]),
     %file:write_file(State,  add_long_string([<<"\n">>,get_time_to_string(erlang:date(), erlang:time()), <<"\n">>, _Msg], <<"">>),  [binary] ),
 
     {noreply, State}.
 
 handle_info(_Info, State) ->
-	io:format("Handle_INFO\n"),
+    io:format("Handle_INFO\n"),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
@@ -86,4 +87,3 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
-

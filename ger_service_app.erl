@@ -9,8 +9,8 @@
 %% Application callbacks
 %% ===================================================================
 
-start(_Type, Port) ->
-    ger_service_sup:start_link(Port).
+start(_Type, _Args) ->
+    ger_service_sup:start_link().
 
 stop(_State) ->
 	application:stop(ger_service_app),
